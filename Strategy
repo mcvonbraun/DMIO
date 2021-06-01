@@ -1,0 +1,21 @@
+if algorithm.IsWarmingUp or not self.set_flag:
+            return []
+
+        self.set_flag = False
+        insights = []
+
+        vola = self.history[self.MKT].pct_change().std() * np.sqrt(252)
+        wait_days = int(vola * self.BASE_RET)
+        period = int((1.0 - vola) * self.BASE_RET)
+        r = self.history.pct_change(period).iloc[-1]
+        exit_market = r[self.SLV] < r[self.GLD] and r[self.XLI] < r[self.XLU] and r[self.DBB] < r[self.UUP]
+
+        direction = InsightDirection.Down
+        if exit_market:
+            self.count = 0
+        else:
+            self.count += 1
+            if self.count >= wait_days:
+                direction = InsightDirection.Up
+
+        insights.append(Insight.Price(self.MKT, self.predictionInterval, direction))
